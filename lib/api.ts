@@ -2,6 +2,7 @@ import axios, { type AxiosResponse } from "axios";
 import type { Note } from "../types/note";
 
 const BASE_URL = "https://notehub-public.goit.study/api/notes";
+
 const myKey = process.env.NEXT_PUBLIC_NOTEHUB_TOKEN;
 
 export interface FetchNotesResponse {
@@ -12,7 +13,8 @@ export interface FetchNotesResponse {
 export const fetchNotes = async (
   search: string,
   page = 1,
-  perPage = 12
+  perPage = 9,
+  tag?: string
 ): Promise<FetchNotesResponse> => {
   const params: Record<string, string> = {
     page: String(page),
@@ -20,6 +22,10 @@ export const fetchNotes = async (
   };
   if (search.trim() !== "") {
     params.search = search;
+  }
+
+  if (tag && tag.toLowerCase() !== "all") {
+    params.tag = tag;
   }
 
   const config = {
@@ -70,4 +76,10 @@ export const fetchNoteById = async (id: string): Promise<Note> => {
     config
   );
   return response.data;
+};
+
+export const getTags = async (): Promise<string[]> => {
+  const { notes } = await fetchNotes("");
+  const tags = Array.from(new Set(notes.map((note) => note.tag)));
+  return [...tags];
 };

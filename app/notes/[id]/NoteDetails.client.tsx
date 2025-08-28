@@ -1,38 +1,18 @@
 "use client";
 
-import {
-  DehydratedState,
-  useQuery,
-  HydrationBoundary,
-} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+
 import { fetchNoteById } from "@/lib/api";
-import Loader from "@/app/loading";
 
 import css from "./NoteDetails.page.module.css";
+import Loader from "@/app/loading";
 
-// Props клієнтського компонента
 interface NoteDetailsClientProps {
   noteId: string;
-  dehydratedState?: DehydratedState;
 }
 
-// Тип даних нотатки
-interface NoteType {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-}
-
-export default function NoteDetailsClient({
-  noteId,
-  dehydratedState,
-}: NoteDetailsClientProps) {
-  return (
-    <HydrationBoundary state={dehydratedState}>
-      <NoteContent noteId={noteId} />
-    </HydrationBoundary>
-  );
+export default function NoteDetailsClient({ noteId }: NoteDetailsClientProps) {
+  return <NoteContent noteId={noteId} />;
 }
 
 function NoteContent({ noteId }: { noteId: string }) {
@@ -40,19 +20,19 @@ function NoteContent({ noteId }: { noteId: string }) {
     data: note,
     isLoading,
     error,
-  } = useQuery<NoteType>({
+  } = useQuery({
     queryKey: ["note", noteId],
     queryFn: () => fetchNoteById(noteId),
     refetchOnMount: false,
   });
 
-  if (isLoading) return <Loader />;
-  if (error || !note) return <p>Something went wrong.</p>;
+  if (isLoading) {
+    return <Loader />;
+  }
 
-  const createdDate = new Date(note.createdAt);
-  const formattedDate = isNaN(createdDate.getTime())
-    ? "Invalid date"
-    : createdDate.toLocaleDateString();
+  if (error || !note) {
+    return <p>Something went wrong.</p>;
+  }
 
   return (
     <div className={css.container}>
@@ -61,7 +41,9 @@ function NoteContent({ noteId }: { noteId: string }) {
           <h2>{note.title}</h2>
         </div>
         <p className={css.content}>{note.content}</p>
-        <p className={css.date}>{formattedDate}</p>
+        <p className={css.date}>
+          {new Date(note.createdAt).toLocaleDateString()}
+        </p>
       </div>
     </div>
   );

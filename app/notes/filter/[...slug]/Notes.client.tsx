@@ -3,27 +3,30 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
-import { fetchNotes, FetchNotesResponse } from "@/lib/api";
 import SearchBox from "@/components/SearchBox/SearchBox";
 import Pagination from "@/components/Pagination/Pagination";
 import NoteForm from "@/components/NoteForm/NoteForm";
 import Modal from "@/components/Modal/Modal";
 import NoteList from "@/components/NoteList/NoteList";
-import Loader from "../loading";
+import Loader from "@/app/loading";
+import { fetchNotes, FetchNotesResponse } from "@/lib/api";
 
 import css from "./Notes.page.module.css";
 
-export default function NotesClient() {
+interface NotesClientProps {
+  tag?: string;
+}
+
+export default function NotesClient({ tag }: NotesClientProps) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounce(search, 500);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Використовуємо useQuery, який підхоплює дехідратовані дані з HydrationBoundary
   const { data, isFetching, isError, error } = useQuery<FetchNotesResponse>({
-    queryKey: ["notes", { search: debouncedSearch, page }],
-    queryFn: () => fetchNotes(debouncedSearch, page),
-    placeholderData: (prevData) => prevData,
+    queryKey: ["notes", debouncedSearch, page, tag],
+    queryFn: () => fetchNotes(debouncedSearch, page, 9, tag),
+    placeholderData: (prev) => prev,
   });
 
   const handleSearchChange = (value: string) => {
@@ -42,7 +45,7 @@ export default function NotesClient() {
     <div className={css.app}>
       <header className={css.toolbar}>
         <SearchBox value={search} onChange={handleSearchChange} />
-        {data?.totalPages && data.totalPages > 1 && (
+        {data && data.totalPages > 1 && (
           <Pagination
             pageCount={data.totalPages}
             currentPage={page}
@@ -54,18 +57,20 @@ export default function NotesClient() {
         </button>
       </header>
 
+      <h2 className={css.title}>
+        {tag ? `Notes tagged: ${tag}` : "All notes"}
+      </h2>
+
       {isFetching && <Loader />}
       {isError && <p>Error: {(error as Error).message}</p>}
-      {data?.notes.length === 0 && !isFetching && (
+      {data && data.notes.length === 0 && !isFetching && (
         <p className={css.notfound}>
           {debouncedSearch
             ? `No notes found for "${debouncedSearch}"`
             : "No notes found"}
         </p>
       )}
-
-      {data?.notes && data.notes.length > 0 && <NoteList notes={data.notes} />}
-
+      {data && data.notes.length > 0 && <NoteList notes={data.notes} />}
       {isModalOpen && (
         <Modal onClose={closeModal}>
           <NoteForm onCancel={closeModal} />
