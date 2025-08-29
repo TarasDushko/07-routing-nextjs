@@ -3,7 +3,7 @@ import type { Note } from "../types/note";
 
 const BASE_URL = "https://notehub-public.goit.study/api/notes";
 
-const myKey = process.env.NOTEHUB_TOKEN;
+const myKey = process.env.NEXT_PUBLIC_NOTEHUB_TOKEN;
 
 export interface FetchNotesResponse {
   notes: Note[];
